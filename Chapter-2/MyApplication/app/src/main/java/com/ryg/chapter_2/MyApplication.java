@@ -1,0 +1,23 @@
+package com.ryg.chapter_2;
+
+import android.app.Application;
+import android.os.Process;
+import android.util.Log;
+
+import com.ryg.chapter_2.utils.MyUtils;
+
+/**
+ * Created by 25400 on 2019/11/4.
+ */
+
+public class MyApplication extends Application {
+
+    private static final String TAG = "MyApplication";
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        String processName = MyUtils.getProcessName(getApplicationContext(), Process.myPid());
+        Log.d(TAG, "application start, process name:" + processName);
+    }
+}
