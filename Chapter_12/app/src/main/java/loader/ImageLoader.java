@@ -3,12 +3,17 @@ package loader;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.Build;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.os.StatFs;
 import android.util.Log;
 import android.util.LruCache;
 import android.widget.ImageView;
+
+import com.example.chapter_12.R;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -27,6 +32,8 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import utils.MyUtils;
 
 /**
  * Created by 25400 on 2019/12/2.
@@ -117,6 +124,10 @@ public class ImageLoader {
     }
 
     public void bindBitmap(final String uri, final ImageView imageView){
+        bindBitmap(uri, imageView, 0, 0);
+    }
+
+    public void bindBitmap(final String uri, final ImageView imageView, final int reqWidth, final int reqHeight){
         imageView.setTag(TAG_KEY_URI, uri);
         Bitmap bitmap = loadBitmapFromMenCache(uri);
         if (bitmap != null){
@@ -286,6 +297,34 @@ public class ImageLoader {
     }
 
     public File getDiskCacheDir(Context context, String uniqueName){
-        
+        boolean externalStorageAvailable = Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED);
+        final String cachePath;
+        if (externalStorageAvailable){
+            cachePath = context.getExternalCacheDir().getPath();
+        }else {
+            cachePath = context.getCacheDir().getPath();
+        }
+
+        return new File(cachePath + File.separator + uniqueName);
+    }
+
+    private long getUsableSpace(File path){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD){
+            return path.getUsableSpace();
+        }
+        final StatFs stats = new StatFs(path.getPath());
+        return (long)stats.getBlockSize() * (long)stats.getAvailableBlocks();
+    }
+
+    private static class LoaderResult{
+        public ImageView imageView;
+        public String uri;
+        public Bitmap bitmap;
+
+        public LoaderResult(ImageView imageView, String uri, Bitmap bitmap){
+            this.imageView = imageView;
+            this.uri = uri;
+            this.bitmap = bitmap;
+        }
     }
 }
